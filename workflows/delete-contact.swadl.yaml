@@ -1,0 +1,26 @@
+id: test-delete-contact
+activities:
+- delete-connect-contact:
+    id: deleteContact
+    on:
+      message-received:
+        content: /offboard {userId}
+    user-id: ${event.args.userId}
+
+- send-message:
+    id: error
+    on:
+      activity-failed:
+        activity-id: deleteContact
+    content: Unable to offboard user
+
+- execute-script:
+    id: debug
+    on:
+      activity-completed:
+        activity-id: deleteContact
+    script: println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(deleteContact.outputs))
+
+- send-message:
+    id: report
+    content: User offboarded

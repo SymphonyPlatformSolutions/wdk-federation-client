@@ -1,0 +1,23 @@
+bdk:
+  host: develop2.symphony.com
+  bot:
+    username: ys-bot
+    privateKey:
+      path: ../rsa/privatekey.pem
+  federation:
+    uri: https://connect.symphony.com/admin
+    privateKey:
+      path: ../rsa/connectkey.pem
+    publicKeyName: x
+spring.main.web-application-type: none
+logging.level:
+  org:
+    reflections: error
+    springframework: error
+    apache: error
+  com:
+    zaxxer: error
+    symphony: info
+    symphony.bdk.workflow.swadl: error
+    symphony.bdk.spring.config: error
+  springfox: error

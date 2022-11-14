@@ -1,0 +1,103 @@
+id: test-onboard-contact
+variables:
+  network: WHATSAPP
+
+activities:
+- execute-script:
+    id: cacheInitiator
+    on:
+      message-received:
+        content: /onboard
+    script: |
+      variables.initiator = event.initiator.user.userId
+      variables.randomId = (new Random()).nextInt(77)
+
+- send-message:
+    id: onboard
+    content: |
+      <form id="onboard">
+        <text-field name="firstName" required="true" placeholder="First Name">Joe</text-field>
+        <text-field name="lastName" required="true" placeholder="Last Name">Dough</text-field>
+        <text-field name="company" required="true" placeholder="Company">Joe Bakes</text-field>
+        <text-field name="phoneNumber" required="true" placeholder="Phone Number (+1234567)">+651234567</text-field>
+        <text-field name="email" required="true" placeholder="Email Address">joe@dough.com</text-field>
+        <text-field name="advisorEmail" required="true" placeholder="Advisor Email Address">ys@preview.symphony.com</text-field>
+        <button type="action" name="submit">Submit</button>
+      </form>
+
+- add-connect-contact:
+    id: addContact
+    on:
+      form-replied:
+        form-id: onboard
+        exclusive: true
+    contact:
+      external-network: ${variables.network}
+      first-name: ${onboard.firstName}
+      last-name: ${onboard.lastName}
+      company-name: ${onboard.company}
+      phone-number: ${onboard.phoneNumber}
+      email-address: ${onboard.email}
+      onboarder-email-address: ${onboard.advisorEmail}
+
+- send-message:
+    id: error
+    on:
+      activity-failed:
+        activity-id: addContact
+    content: Unable to onboard user
+
+- execute-script:
+    id: debugAddContact
+    on:
+      activity-completed:
+        activity-id: addContact
+    script: println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(addContact.outputs))
+
+- create-connect-room:
+    id: createRoom
+    room-name: Welcome to Connect ${variables.randomId}
+    owner-symphony-id: ${variables.initiator}
+    external-network: ${variables.network}
+
+- execute-script:
+    id: debugCreateRoom
+    script: println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(createRoom.outputs))
+
+- who-am-i:
+    id: whoAmI
+
+- add-connect-room-member:
+    id: addContactToRoom
+    stream-id: ${createRoom.outputs.streamId}
+    member-symphony-id: ${addContact.outputs.contact.symphonyId}
+    advisor-symphony-id: ${variables.initiator}
+    external-network: ${variables.network}
+    contact: true
+
+- add-connect-room-member:
+    id: addBotToRoom
+    stream-id: ${createRoom.outputs.streamId}
+    member-symphony-id: ${whoAmI.outputs.session.id}
+    advisor-symphony-id: ${variables.initiator}
+    external-network: ${variables.network}
+    contact: false
+
+- execute-script:
+    id: debugAddToRooms
+    script: |
+      println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(addContactToRoom.outputs))
+      println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(addBotToRoom.outputs))
+
+- send-message:
+    id: sendWelcomeMsg
+    to:
+      stream-id: ${createRoom.outputs.streamId}
+    content: Hello <mention uid="${addContact.outputs.contact.symphonyId}" /> Welcome to Connect!
+
+- send-message:
+    id: report
+    to:
+      user-ids:
+        - ${variables.initiator}
+    content: Onboarding complete
