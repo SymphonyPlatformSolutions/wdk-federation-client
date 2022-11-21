@@ -1,5 +1,5 @@
 bdk:
-  host: develop2.symphony.com
+  host: preview.symphony.com
   bot:
     username: ys-bot
     privateKey:

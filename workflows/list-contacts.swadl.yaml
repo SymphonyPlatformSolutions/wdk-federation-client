@@ -1,4 +1,4 @@
-id: test-list-contacts
+id: list-contacts
 activities:
   - list-connect-contacts:
       id: listOne

@@ -21,6 +21,6 @@ public class AddConnectRoomMemberExecutor implements ActivityExecutor<AddConnect
         .externalNetwork(activity.getExternalNetwork())
         .contact(activity.isContact())
         .build();
-    client.addRoomMember(activity.getStreamId(), request);
+    context.setOutputVariable("result", client.addRoomMember(activity.getStreamId(), request));
   }
 }

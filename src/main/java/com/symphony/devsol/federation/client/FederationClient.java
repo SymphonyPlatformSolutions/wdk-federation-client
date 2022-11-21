@@ -74,6 +74,11 @@ public class FederationClient {
         return post("/api/v2/customer/entitlements", data, String.class);
     }
 
+    public String addEntitlement(long symphonyId, ExternalNetwork externalNetwork) {
+        Map<String, String> data = Map.of("symphonyId", "" + symphonyId, "externalNetwork", externalNetwork.toString());
+        return post("/api/v2/customer/entitlements", data, String.class);
+    }
+
     public String removeEntitlement(String advisorEmailAddress, ExternalNetwork externalNetwork) {
         String uri = String.format("/api/v2/customer/advisor/entitlements?advisorEmailAddress=%s&externalNetwork=%s", advisorEmailAddress, externalNetwork);
         return delete(uri, String.class);

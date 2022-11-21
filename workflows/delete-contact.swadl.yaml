@@ -1,24 +1,19 @@
-id: test-delete-contact
+id: delete-contact
 activities:
-- delete-connect-contact:
-    id: deleteContact
+- list-connect-contacts:
+    id: listOne
     on:
       message-received:
-        content: /offboard {userId}
-    user-id: ${event.args.userId}
+        content: /offboard {email}
+    network: WHATSAPP
+    email-address: ${event.args.email}
 
-- send-message:
-    id: error
-    on:
-      activity-failed:
-        activity-id: deleteContact
-    content: Unable to offboard user
+- delete-connect-contact:
+    id: deleteContact
+    user-id: ${listOne.outputs.contacts[0].symphonyId}
 
 - execute-script:
     id: debug
-    on:
-      activity-completed:
-        activity-id: deleteContact
     script: println groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(deleteContact.outputs))
 
 - send-message:
