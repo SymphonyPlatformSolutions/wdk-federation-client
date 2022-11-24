@@ -2,6 +2,7 @@ package com.symphony.devsol.federation.client;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.symphony.bdk.core.auth.jwt.JwtHelper;
 import com.symphony.devsol.federation.model.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,12 +18,13 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,13 +42,8 @@ public class FederationClient {
 
     @PostConstruct
     public void init() throws Exception {
-        String key = Files.readString(Path.of(privateKeyPath))
-            .replaceAll("-----(BEGIN|END) PRIVATE KEY-----", "")
-            .replaceAll(System.lineSeparator(), "");
-        byte[] encoded = Base64.getDecoder().decode(key);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-        privateKey = (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+        String keyContent = Files.readString(Path.of(privateKeyPath));
+        privateKey = (RSAPrivateKey) JwtHelper.parseRsaPrivateKey(keyContent);
     }
 
     private String generateToken() {
