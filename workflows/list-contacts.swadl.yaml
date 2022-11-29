@@ -15,16 +15,9 @@ activities:
           activity-id: listOne
       content: Unable to find matching contact
 
-  - execute-script:
-      id: debug
+  - send-message:
+      id: report
       on:
         activity-completed:
           activity-id: listOne
-      script: |
-        import groovy.json.JsonOutput
-        variables.report = JsonOutput.prettyPrint(JsonOutput.toJson(listOne.outputs.contacts)) 
-        println variables.report
-
-  - send-message:
-      id: report
       content: <code>${escape(variables.report)}</code>

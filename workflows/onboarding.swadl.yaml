@@ -1,0 +1,83 @@
+id: onboarding
+variables:
+  network: WHATSAPP
+
+activities:
+  - send-message:
+      id: onboard
+      on:
+        message-received:
+          id: initEvent
+          content: /connect-onboard
+      content: |
+        <form id="onboard">
+          <text-field name="firstName" required="true" placeholder="First Name">Joe</text-field>
+          <text-field name="lastName" required="true" placeholder="Last Name">Dough</text-field>
+          <text-field name="company" required="true" placeholder="Company">Joe Bakes</text-field>
+          <text-field name="phoneNumber" required="true" placeholder="Phone Number (+1234567)">+65</text-field>
+          <text-field name="email" required="true" placeholder="Email Address">joe@dough.com</text-field>
+          <text-field name="advisorEmail" required="true" placeholder="Advisor Email Address">abc@symphony.com</text-field>
+          <button type="action" name="submit">Submit</button>
+        </form>
+
+  - add-connect-contact:
+      id: addContact
+      on:
+        form-replied:
+          form-id: onboard
+          exclusive: true
+      contact:
+        external-network: ${variables.network}
+        first-name: ${onboard.firstName}
+        last-name: ${onboard.lastName}
+        company-name: ${onboard.company}
+        phone-number: ${onboard.phoneNumber}
+        email-address: ${onboard.email}
+        onboarder-email-address: ${onboard.advisorEmail}
+
+  - create-connect-room:
+      id: createRoom
+      room-name: Welcome to Connect ${addContact.outputs.contact.symphonyId}
+      owner-symphony-id: ${initEvent.initiator.user.userId}
+      external-network: ${variables.network}
+
+  - who-am-i:
+      id: whoAmI
+
+  - add-connect-room-member:
+      id: addToRoom
+      stream-id: ${createRoom.outputs.room.streamId}
+      advisor-symphony-id: ${initEvent.initiator.user.userId}
+      external-network: ${variables.network}
+      member-symphony-ids:
+        - ${addContact.outputs.contact.symphonyId}
+        - ${whoAmI.outputs.session.id}
+
+  - get-room-members:
+      id: listMembers
+      stream-id: ${createRoom.outputs.room.streamId}
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: addToRoom
+          - activity-completed:
+              activity-id: checkMembers
+              if: ${variables.quorum == false}
+
+  - execute-script:
+      id: checkMembers
+      script: |
+        variables.quorum = (listMembers.outputs.members.size() >= 4)
+        sleep(3000)
+
+  - send-message:
+      id: sendWelcomeMsg
+      to:
+        stream-id: ${createRoom.outputs.room.streamId}
+      content: Hello <mention uid="${addContact.outputs.contact.symphonyId}" /> Welcome to Connect!
+
+  - send-message:
+      id: report
+      to:
+        stream-id: ${initEvent.source.message.stream.streamId}
+      content: Onboarding complete!

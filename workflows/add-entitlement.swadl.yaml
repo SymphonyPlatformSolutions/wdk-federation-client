@@ -1,0 +1,13 @@
+id: add-entitlement
+activities:
+  - add-connect-entitlement:
+      id: init
+      on:
+        message-received:
+          content: /add-connect-entitlement @{person}
+      external-network: WHATSAPP
+      symphony-id: ${mentions(event)[0]}
+
+  - send-message:
+      id: report
+      content: Added entitlement for <mention uid="${mentions(event)[0]}" />

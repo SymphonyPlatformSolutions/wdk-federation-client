@@ -137,6 +137,10 @@ public class FederationClient {
         return post(String.format("/api/v2/customer/rooms/%s/members", streamId), request, ConnectContactResponse.class);
     }
 
+    public BulkConnectContactResponse addRoomMember(BulkAddRoomMemberRequest request) {
+        return post("/api/v2/customer/rooms/members", request, BulkConnectContactResponse.class);
+    }
+
     public String deleteRoomMember(String streamId, String memberEmailAddress, ExternalNetwork externalNetwork, String advisorEmailAddress, boolean contact) {
         String url = String.format("/api/v1/customer/rooms/%s/members?memberEmailAddress=%s&externalNetwork=%s&advisorEmailAddress=%s&contact=%s",
             streamId, memberEmailAddress, externalNetwork, advisorEmailAddress, contact);
