@@ -6,9 +6,10 @@ import com.symphony.devsol.federation.client.FederationClient;
 import com.symphony.devsol.federation.model.AddRoomMemberRequest;
 import com.symphony.devsol.federation.model.BulkAddRoomMemberEntry;
 import com.symphony.devsol.federation.model.BulkAddRoomMemberRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class AddConnectRoomMemberExecutor implements ActivityExecutor<AddConnect
     if (activity.getMemberSymphonyIds() != null) {
       List<BulkAddRoomMemberEntry> requests = activity.getMemberSymphonyIds().stream()
           .map(id -> BulkAddRoomMemberEntry.builder().streamId(activity.getStreamId()).memberSymphonyId(id).build())
-          .toList();
+          .collect(toList());
       BulkAddRoomMemberRequest request = BulkAddRoomMemberRequest.builder()
           .requests(requests)
           .advisorSymphonyId(activity.getAdvisorSymphonyId())

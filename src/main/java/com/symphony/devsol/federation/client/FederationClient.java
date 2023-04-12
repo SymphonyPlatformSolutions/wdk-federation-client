@@ -29,24 +29,29 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class FederationClient {
-    @Value("${bdk.federation.publicKeyName}")
+    @Value("${bdk.federation.publicKeyName:}")
     private String publicKeyName;
-    @Value("${bdk.federation.privateKey.path}")
+    @Value("${bdk.federation.privateKey.path:}")
     private String privateKeyPath;
-    @Value("${bdk.federation.uri}")
+    @Value("${bdk.federation.uri:}")
     private String connectUri;
-    private RSAPrivateKey privateKey;
+    private RSAPrivateKey privateKey = null;
     private final RestTemplate restTemplate = new RestTemplate();
     private Instant tokenExpiry = Instant.now();
     private HttpHeaders headers;
 
     @PostConstruct
     public void init() throws Exception {
-        String keyContent = Files.readString(Path.of(privateKeyPath));
-        privateKey = (RSAPrivateKey) JwtHelper.parseRsaPrivateKey(keyContent);
+        if (!publicKeyName.isEmpty()) {
+            String keyContent = Files.readString(Path.of(privateKeyPath));
+            privateKey = (RSAPrivateKey) JwtHelper.parseRsaPrivateKey(keyContent);
+        }
     }
 
     private String generateToken() {
+        if (privateKey == null) {
+            throw new RuntimeException("Federation configuration is missing");
+        }
         Instant now = Instant.now();
         return JWT.create()
             .withSubject("ces:customer:" + publicKeyName)
@@ -72,7 +77,7 @@ public class FederationClient {
     }
 
     public String addEntitlement(long symphonyId, ExternalNetwork externalNetwork) {
-        Map<String, String> data = Map.of("symphonyId", "" + symphonyId, "externalNetwork", externalNetwork.toString());
+        Map<String, String> data = Map.of("symphonyId", String.valueOf(symphonyId), "externalNetwork", externalNetwork.toString());
         return post("/api/v2/customer/entitlements", data, String.class);
     }
 
