@@ -1,3 +1,6 @@
+wdk:
+  workflows:
+    path: ./workflows
 bdk:
   host: preview.symphony.com
   bot:

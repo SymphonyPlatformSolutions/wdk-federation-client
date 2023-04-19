@@ -138,6 +138,11 @@ public class FederationClient {
         return post("/api/v2/customer/rooms", request, CreateRoomResponse.class);
     }
 
+    public RenameRoomResponse renameRoom(String streamId, String newRoomName) {
+        Map<String, String> request = Map.of("newRoomName", newRoomName);
+        return post(String.format("/api/v1/customer/rooms/%s/rename", streamId), request, RenameRoomResponse.class);
+    }
+
     public ConnectContactResponse addRoomMember(String streamId, AddRoomMemberRequest request) {
         return post(String.format("/api/v2/customer/rooms/%s/members", streamId), request, ConnectContactResponse.class);
     }

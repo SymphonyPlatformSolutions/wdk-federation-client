@@ -1,0 +1,9 @@
+id: abc
+activities:
+- rename-connect-room:
+    id: renameConnectRoom
+    on:
+      message-received:
+        content: /renames
+    stream-id: 56hNP_zpWAL1Mz6tSKfOtH___niF_Ib4dA
+    new-room-name: Hello World! ABCD
