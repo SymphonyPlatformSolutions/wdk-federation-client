@@ -1,6 +1,6 @@
 wdk:
-  workflows:
-    path: ./workflows
+  workflows.path: ./workflows
+  encrypt.passphrase: mysupersecretpassphrase
 bdk:
   host: preview.symphony.com
   bot:
@@ -21,6 +21,8 @@ logging.level:
   com:
     zaxxer: error
     symphony: info
-    symphony.bdk.workflow.swadl: error
+    symphony.bdk.workflow:
+      swadl: error
+      engine.executor.DebugExecutor: debug
     symphony.bdk.spring.config: error
   springfox: error

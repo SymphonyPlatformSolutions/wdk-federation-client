@@ -19,7 +19,7 @@ jobs:
       with:
         arguments: build
 
-    - run: rm lib/jackson* && zip -r wdk-federation-client.zip lib/*
+    - run: cd lib && zip -r ../wdk-federation-client.zip .
 
     - uses: softprops/action-gh-release@v1
       with:

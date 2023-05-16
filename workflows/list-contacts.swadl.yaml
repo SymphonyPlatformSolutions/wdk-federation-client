@@ -1,33 +1,29 @@
-id: federation-rename-room
+id: list-contacts
 activities:
-- send-message:
-    id: renameRoom
+- list-connect-contacts:
+    id: listOne
     on:
       message-received:
-        content: /rename-room
-    content: |
-      <form id="renameRoom">
-        <text-field name="streamId" placeholder="Stream ID" />
-        <text-field name="newRoomName" placeholder="New Room Name" />
-        <button name="rename">Rename Room</button>
-      </form>
+        content: /find-contact {email}
+    network: WHATSAPP
+    email-address: ${event.args.email}
 
-- rename-connect-room:
-    id: executeRenameRoom
+- send-message:
+    id: error
     on:
-      form-replied:
-        form-id: renameRoom
-    stream-id: ${renameRoom.streamId}
-    new-room-name: ${renameRoom.newRoomName}
+      activity-failed:
+        activity-id: listOne
+    content: Unable to find matching contact
 
-- update-message:
+- send-message:
     id: report
-    message-id: ${event.source.formMessageId}
     on:
-      form-replied:
-        form-id: renameRoom
+      activity-completed:
+        activity-id: listOne
     content: |
-      Room
-      <b>${executeRenameRoom.outputs.rooms.oldRoomName}</b>
-      is now
-      <b>${executeRenameRoom.outputs.rooms.newRoomName}</b>
+      <table>
+        <tr><td>First Name</td><td>${listOne.outputs.contacts.contacts[0].firstName}</td></tr>
+        <tr><td>Last Name</td><td>${listOne.outputs.contacts.contacts[0].lastName}</td></tr>
+        <tr><td>Company Name</td><td>${listOne.outputs.contacts.contacts[0].companyName}</td></tr>
+        <tr><td>Phone Number</td><td>${listOne.outputs.contacts.contacts[0].phoneNumber}</td></tr>
+      </table>
