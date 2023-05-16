@@ -1,6 +1,8 @@
 plugins {
   id 'java'
   id 'io.freefair.lombok' version '8.0.1'
+  id 'org.openapi.generator' version '6.6.0'
+  id 'de.undercouch.download' version '5.4.0'
 }
 
 java {
@@ -11,6 +13,12 @@ java {
 
 repositories {
   mavenCentral()
+  maven {
+    url "https://oss.sonatype.org/content/repositories/snapshots"
+    mavenContent {
+      snapshotsOnly()
+    }
+  }
 }
 
 configurations {
@@ -18,12 +26,32 @@ configurations {
 }
 
 dependencies {
-  compileOnly 'org.finos.symphony.wdk:workflow-language:1.5.1'
-  compileOnly 'org.finos.symphony.bdk:symphony-bdk-app-spring-boot-starter:2.13.0'
-  compileOnly 'org.springframework.retry:spring-retry:1.3.4'
+  compileOnly 'org.finos.symphony.wdk:workflow-language:1.6.0-SNAPSHOT'
+  compileOnly 'org.finos.symphony.bdk:symphony-bdk-app-spring-boot-starter:2.14.0'
   implementation 'com.auth0:java-jwt:4.4.0'
-  botJar 'org.finos.symphony.wdk:workflow-bot-app:1.5.1:boot'
+  implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+  implementation 'com.google.code.findbugs:jsr305:3.0.2'
+  botJar 'org.finos.symphony.wdk:workflow-bot-app:1.6.0-SNAPSHOT:boot'
 }
+
+tasks.register('downloadFile', Download) {
+  src 'https://3306294353-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FU492yptxY5Gs1jk0rqHF%2Fuploads%2Fgit-blob-78560a6fa9d3e49144c0d0fd1b09e4a711805c1d%2Fapi.yaml?alt=media'
+  dest "${buildDir}/spec.yaml"
+}
+
+openApiGenerate {
+  generatorName = 'java'
+  library = 'resttemplate'
+  inputSpec = "$buildDir/spec.yaml"
+  outputDir = "$buildDir/generated"
+  apiPackage = 'com.symphony.devsol.federation.gen'
+  invokerPackage = 'com.symphony.devsol.federation.http'
+  modelPackage = 'com.symphony.devsol.federation.model'
+  configOptions.putAll([ dateLibrary: 'custom' ])
+  typeMappings.putAll([ typeMapping: 'DateTime=Instant' ])
+  importMappings.putAll([ importMapping: 'DateTime=Instant' ])
+}
+sourceSets.main.java.srcDirs += "$buildDir/generated/src/main/java"
 
 tasks.register('botJar', Copy) {
   description "Downloads WDK jar."
@@ -40,4 +68,6 @@ tasks.register('customActivityLibs', Copy) {
   into "lib"
 }
 
+tasks.openApiGenerate.dependsOn tasks.downloadFile
+tasks.compileJava.dependsOn tasks.openApiGenerate
 tasks.build.dependsOn tasks.customActivityLibs

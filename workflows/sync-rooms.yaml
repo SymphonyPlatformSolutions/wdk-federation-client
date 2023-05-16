@@ -1,0 +1,82 @@
+id: sync-rooms
+variables:
+  advisorId: 349026222343926
+  connectStreams: []
+  after: null
+  index: 0
+activities:
+  - get-user-streams:
+      id: ownStreams
+      types:
+      - ROOM
+      limit: 1000
+      skip: 0
+      on:
+        message-received:
+          content: /sync-rooms
+
+  - list-connect-rooms:
+      id: listRooms
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: ownStreams
+          - activity-completed:
+              activity-id: process
+              if: ${variables.after != null}
+      advisor-symphony-id: ${variables.advisorId}
+      external-network: WHATSAPP
+      after: ${variables.after}
+
+  - execute-script:
+      id: process
+      script: |
+        variables.connectStreams = variables.connectStreams + listRooms.outputs.rooms.rooms
+          .findAll { it.roomStatus.getValue() != "DEACTIVATED" }
+          .collect { [ streamId: it.streamId, roomName: it.roomName, roomStatus: it.roomStatus ] }
+        variables.after = listRooms.outputs.rooms.pagination.cursors.after
+        if (variables.after == null) {
+          variables.ownStreamIds = ownStreams.outputs.streams.findAll { it.crossPod }.collect { it.id }
+          variables.connectStreamIds = variables.connectStreams.streamId
+          variables.todoStreamIds = variables.connectStreamIds - variables.ownStreamIds
+          variables.todoStreams = variables.connectStreams.findAll { it.streamId in variables.todoStreamIds }
+        }
+
+  - add-connect-room-member:
+      id: performSync
+      if: ${variables.todoStreamIds.size() > 0}
+      external-network: WHATSAPP
+      advisor-symphony-id: ${variables.advisorId}
+      stream-ids: ${variables.todoStreamIds}
+      member-symphony-ids:
+        - ${session().id}
+
+  - send-message:
+      id: report
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: process
+              if: ${variables.todoStreamIds.size() == 0}
+          - activity-completed:
+              activity-id: performSync
+      content: |
+        <h3>Sync Report</h3>
+        Connect Rooms: ${variables.connectStreamIds.size()}<br/>
+        Bot Rooms: ${variables.ownStreamIds.size()}<br/>
+        Discrepancy: ${variables.todoStreamIds.size()}<br/>
+        
+        <#assign data = ${variables.todoStreams}>
+        <#if data?size != 0>
+          <table>
+          <tr><td>#</td><td>Stream ID</td><td>Room Name</td><td>Status</td></tr>
+          <#list data as room>
+            <tr>
+              <td>\${room?index + 1}</td>
+              <td>\${room.streamId}</td>
+              <td>\${room.roomName}</td>
+              <td>\${room.roomStatus}</td>
+            </tr>
+          </#list>
+          </table>
+        </#if>

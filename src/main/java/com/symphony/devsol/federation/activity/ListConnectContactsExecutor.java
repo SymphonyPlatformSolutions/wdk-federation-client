@@ -2,44 +2,31 @@ package com.symphony.devsol.federation.activity;
 
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutor;
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutorContext;
-import com.symphony.devsol.federation.client.FederationClient;
-import com.symphony.devsol.federation.model.ConnectContactResponse;
-import com.symphony.devsol.federation.model.ConnectContactSearch;
-import com.symphony.devsol.federation.model.ExternalNetwork;
+import com.symphony.devsol.federation.gen.SearchApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ListConnectContactsExecutor implements ActivityExecutor<ListConnectContacts> {
-  private final FederationClient client;
+  private final SearchApi searchApi;
 
   @Override
   public void execute(ActivityExecutorContext<ListConnectContacts> context) {
     ListConnectContacts activity = context.getActivity();
-    ExternalNetwork network = activity.getNetwork();
-    long advisorUserId = activity.getAdvisorUserId();
-    List<ConnectContactResponse> contacts;
+    String network = activity.getNetwork();
+    BigDecimal advisorUserId = activity.getAdvisorUserId();
+    String before = activity.getBefore();
+    String after = activity.getAfter();
 
-    if (advisorUserId > 0L) {
-      contacts = client.listContactsForAdvisor(network, advisorUserId).getContacts();
-    } else if (activity.getPhoneNumber() != null) {
-      contacts = client.findContactByPhoneNumber(network, activity.getPhoneNumber()).getContacts();
-    } else if (activity.getEmailAddress() != null) {
-      contacts = client.findContactByEmailAddress(network, activity.getEmailAddress()).getContacts();
+    if (advisorUserId != null) {
+      context.setOutputVariable("contacts", searchApi.findContactsOfAdvisorv2(network, advisorUserId, before, after));
     } else {
-      ConnectContactSearch search = client.listContacts(network, null);
-      contacts = new ArrayList<>(search.getContacts());
-
-      while (search.getPagination() != null && search.getPagination().getNext() != null) {
-        search = client.listContacts(network, search.getPagination().getNext());
-        contacts.addAll(search.getContacts());
-      }
+      context.setOutputVariable("contacts", searchApi.listContacts2(
+          network, activity.getEmailAddress(), activity.getPhoneNumber(), activity.getSymphonyId(), before, after));
     }
-    context.setOutputVariable("contacts", contacts);
   }
 }

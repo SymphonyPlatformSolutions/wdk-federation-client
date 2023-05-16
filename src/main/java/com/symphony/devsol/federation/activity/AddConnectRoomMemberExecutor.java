@@ -2,42 +2,66 @@ package com.symphony.devsol.federation.activity;
 
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutor;
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutorContext;
-import com.symphony.devsol.federation.client.FederationClient;
-import com.symphony.devsol.federation.model.AddRoomMemberRequest;
-import com.symphony.devsol.federation.model.BulkAddRoomMemberEntry;
-import com.symphony.devsol.federation.model.BulkAddRoomMemberRequest;
+import com.symphony.devsol.federation.gen.RoomApi;
+import com.symphony.devsol.federation.model.BulkRoomMemberItemResponsev2;
+import com.symphony.devsol.federation.model.BulkRoomMemberMultiRoomRequestv2;
+import com.symphony.devsol.federation.model.BulkRoomMemberResponsev2;
+import com.symphony.devsol.federation.model.RoomMemberMultiRoomRequestv2;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import static java.util.stream.Collectors.toList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AddConnectRoomMemberExecutor implements ActivityExecutor<AddConnectRoomMember> {
-  private final FederationClient client;
+  private final RoomApi roomApi;
 
   @Override
   public void execute(ActivityExecutorContext<AddConnectRoomMember> context) {
+    BulkRoomMemberResponsev2 response = new BulkRoomMemberResponsev2();
+    List<BulkRoomMemberItemResponsev2> members = new ArrayList<>();
     AddConnectRoomMember activity = context.getActivity();
 
-    if (activity.getMemberSymphonyIds() != null) {
-      List<BulkAddRoomMemberEntry> requests = activity.getMemberSymphonyIds().stream()
-          .map(id -> BulkAddRoomMemberEntry.builder().streamId(activity.getStreamId()).memberSymphonyId(id).build())
-          .collect(toList());
-      BulkAddRoomMemberRequest request = BulkAddRoomMemberRequest.builder()
-          .requests(requests)
-          .advisorSymphonyId(activity.getAdvisorSymphonyId())
-          .externalNetwork(activity.getExternalNetwork())
-          .build();
-      context.setOutputVariable("result", client.addRoomMember(request));
-    } else {
-      AddRoomMemberRequest request = AddRoomMemberRequest.builder()
-          .advisorSymphonyId(activity.getAdvisorSymphonyId())
-          .memberSymphonyId(activity.getMemberSymphonyId())
-          .externalNetwork(activity.getExternalNetwork())
-          .contact(activity.isContact())
-          .build();
-      context.setOutputVariable("result", client.addRoomMember(activity.getStreamId(), request));
+    BulkRoomMemberMultiRoomRequestv2 request = new BulkRoomMemberMultiRoomRequestv2();
+    request.setAdvisorSymphonyId(activity.getAdvisorSymphonyId());
+    request.setExternalNetwork(activity.getExternalNetwork());
+
+    List<RoomMemberMultiRoomRequestv2> requests = new ArrayList<>();
+    for (String streamId : activity.getStreamIds()) {
+      for (BigDecimal userId : activity.getMemberSymphonyIds()) {
+        RoomMemberMultiRoomRequestv2 req = new RoomMemberMultiRoomRequestv2();
+        req.setMemberSymphonyId(userId);
+        req.setStreamId(streamId);
+        requests.add(req);
+      }
     }
+
+    for (List<RoomMemberMultiRoomRequestv2> batch : split(requests)) {
+      try {
+        if (!members.isEmpty()) {
+          Thread.sleep(300);
+        }
+      } catch (InterruptedException ignore) {}
+
+      request.setRequests(batch);
+      response = roomApi.addRoomMembersMultiRoomv2(request);
+      members.addAll(response.getMembers());
+    }
+    response.setMembers(members);
+    context.setOutputVariable("result", response);
+  }
+
+  private <T> Collection<List<T>> split(List<T> inputList) {
+    AtomicInteger counter = new AtomicInteger();
+    return inputList.stream()
+        .collect(Collectors.groupingBy(gr -> counter.getAndIncrement() / 20))
+        .values();
   }
 }

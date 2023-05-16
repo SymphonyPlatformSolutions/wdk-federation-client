@@ -1,9 +1,19 @@
 id: abc
 activities:
-- rename-connect-room:
-    id: renameConnectRoom
-    on:
-      message-received:
-        content: /renames
-    stream-id: 56hNP_zpWAL1Mz6tSKfOtH___niF_Ib4dA
-    new-room-name: Hello World! ABCD
+  - execute-script:
+      id: process
+      on:
+        message-received:
+          content: /rename-room {text}
+      script: |
+        variables.streamId = event.args.text[0.. event.args.text.indexOf(' ')]
+        variables.newName = event.args.text.substring(variables.streamId.size())
+
+  - rename-connect-room:
+      id: renameConnectRoom
+      stream-id: ${variables.streamId}
+      new-room-name: ${variables.newName}
+
+  - send-message:
+      id: report
+      content: Room <b>${renameConnectRoom.outputs.rooms.oldRoomName}</b> has been renamed to <b>${variables.newName}</b>

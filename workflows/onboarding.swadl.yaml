@@ -41,9 +41,6 @@ activities:
       owner-symphony-id: ${initEvent.initiator.user.userId}
       external-network: ${variables.network}
 
-  - who-am-i:
-      id: whoAmI
-
   - add-connect-room-member:
       id: addToRoom
       stream-id: ${createRoom.outputs.room.streamId}
@@ -51,7 +48,7 @@ activities:
       external-network: ${variables.network}
       member-symphony-ids:
         - ${addContact.outputs.contact.symphonyId}
-        - ${whoAmI.outputs.session.id}
+        - ${session().id}
 
   - get-room-members:
       id: listMembers
