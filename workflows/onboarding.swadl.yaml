@@ -1,80 +1,99 @@
 id: onboarding
 variables:
   network: WHATSAPP
+  advisorEmailAddress: abc@company.com
+  advisorSymphonyId: 1234567890
+  serviceBotId: 987654321
 
 activities:
-  - send-message:
-      id: onboard
-      on:
-        message-received:
-          id: initEvent
-          content: /connect-onboard
-      content: |
-        <form id="onboard">
-          <text-field name="firstName" required="true" placeholder="First Name">Joe</text-field>
-          <text-field name="lastName" required="true" placeholder="Last Name">Dough</text-field>
-          <text-field name="company" required="true" placeholder="Company">Joe Bakes</text-field>
-          <text-field name="phoneNumber" required="true" placeholder="Phone Number (+1234567)">+65</text-field>
-          <text-field name="email" required="true" placeholder="Email Address">joe@dough.com</text-field>
-          <text-field name="advisorEmail" required="true" placeholder="Advisor Email Address">abc@symphony.com</text-field>
-          <button type="action" name="submit">Submit</button>
-        </form>
+- send-message:
+    id: onboard
+    on:
+      message-received:
+        content: /connect-onboard
+    content: |
+      <form id="onboard">
+        <text-field name="firstName" required="true" placeholder="First Name" />
+        <text-field name="lastName" required="true" placeholder="Last Name" />
+        <text-field name="companyName" required="true" placeholder="Company" />
+        <text-field name="phoneNumber" required="true" placeholder="Phone Number (+1234567)">+65</text-field>
+        <text-field name="emailAddress" required="true" placeholder="Email Address" />
+        <text-field name="roomName" required="true" placeholder="Room name" />
+        <button type="action" name="submit">Submit</button>
+      </form>
 
-  - add-connect-contact:
-      id: addContact
-      on:
-        form-replied:
-          form-id: onboard
-          exclusive: true
-      contact:
-        external-network: ${variables.network}
-        first-name: ${onboard.firstName}
-        last-name: ${onboard.lastName}
-        company-name: ${onboard.company}
-        phone-number: ${onboard.phoneNumber}
-        email-address: ${onboard.email}
-        onboarder-email-address: ${onboard.advisorEmail}
+- update-message:
+    id: confirmDetails
+    on:
+      form-replied:
+        form-id: onboard
+    message-id: ${event.source.formMessageId}
+    content: |
+      <b>Contact Details</b>
+      <table>
+        <tr><td>First Name</td><td>${onboard.firstName}</td></tr>
+        <tr><td>Last Name</td><td>${onboard.lastName}</td></tr>
+        <tr><td>Company Name</td><td>${onboard.companyName}</td></tr>
+        <tr><td>Phone Number</td><td>${onboard.phoneNumber}</td></tr>
+        <tr><td>Email Address</td><td>${onboard.emailAddress}</td></tr>
+        <tr><td>Room Name</td><td>${onboard.roomName}</td></tr>
+      </table>
 
-  - create-connect-room:
-      id: createRoom
-      room-name: Welcome to Connect ${addContact.outputs.contact.symphonyId}
-      owner-symphony-id: ${initEvent.initiator.user.userId}
-      external-network: ${variables.network}
+- send-message:
+    id: confirm
+    content: |
+      <b>Confirm details?</b>
+      <form id="confirm">
+        <button name="confirm">Confirm</button>
+        <button name="cancel">Cancel</button>
+      </form>
 
-  - add-connect-room-member:
-      id: addToRoom
-      stream-id: ${createRoom.outputs.room.streamId}
-      advisor-symphony-id: ${initEvent.initiator.user.userId}
-      external-network: ${variables.network}
-      member-symphony-ids:
-        - ${addContact.outputs.contact.symphonyId}
-        - ${session().id}
+- update-message:
+    id: cancelled
+    on:
+      form-replied:
+        form-id: confirm
+    if: ${confirm.action == 'cancel'}
+    message-id: ${event.source.formMessageId}
+    content: <b>Onboarding cancelled</b>
 
-  - get-room-members:
-      id: listMembers
-      stream-id: ${createRoom.outputs.room.streamId}
-      on:
-        one-of:
-          - activity-completed:
-              activity-id: addToRoom
-          - activity-completed:
-              activity-id: checkMembers
-              if: ${variables.quorum == false}
+- update-message:
+    id: pending
+    on:
+      form-replied:
+        form-id: confirm
+    if: ${confirm.action == 'confirm'}
+    message-id: ${event.source.formMessageId}
+    content: <b>Onboarding contact..</b>
 
-  - execute-script:
-      id: checkMembers
-      script: |
-        variables.quorum = (listMembers.outputs.members.size() >= 4)
-        sleep(3000)
+- add-connect-contact:
+    id: addContact
+    contact:
+      firstName: ${onboard.firstName}
+      lastName: ${onboard.lastName}
+      companyName: ${onboard.companyName}
+      phoneNumber: ${onboard.phoneNumber}
+      emailAddress: ${onboard.emailAddress}
+      externalNetwork: ${variables.network}
+      onboarderEmailAddress: ${variables.advisorEmailAddress}
 
-  - send-message:
-      id: sendWelcomeMsg
-      to:
-        stream-id: ${createRoom.outputs.room.streamId}
-      content: Hello <mention uid="${addContact.outputs.contact.symphonyId}" /> Welcome to Connect!
+- create-connect-room:
+    id: createRoom
+    room-name: ${onboard.roomName}
+    owner-symphony-id: ${variables.advisorSymphonyId}
+    external-network: ${variables.network}
 
-  - send-message:
-      id: report
-      to:
-        stream-id: ${initEvent.source.message.stream.streamId}
-      content: Onboarding complete!
+- add-connect-room-member:
+    id: addToRoom
+    stream-ids:
+    - ${createRoom.outputs.room.streamId}
+    advisor-symphony-id: ${variables.advisorSymphonyId}
+    external-network: ${variables.network}
+    member-symphony-ids:
+    - ${addContact.outputs.contact.symphonyId}
+    - ${variables.serviceBotId}
+
+- update-message:
+    id: report
+    message-id: ${pending.outputs.msgId}
+    content: <b>Onboarding complete!</b>
