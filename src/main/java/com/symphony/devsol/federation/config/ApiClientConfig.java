@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import javax.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,10 +57,14 @@ public class ApiClientConfig {
 
     @Bean
     public ApiClient federationApiClient() {
+        DefaultUriBuilderFactory builderFactory = new DefaultUriBuilderFactory();
+        builderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+
         RestTemplate restTemplate = restTemplateBuilder.additionalInterceptors((httpRequest, bytes, clientHttpRequestExecution) -> {
             httpRequest.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + generateToken());
             return clientHttpRequestExecution.execute(httpRequest, bytes);
-        }).build();
+        }).uriTemplateHandler(builderFactory).build();
+
         return new ApiClient(restTemplate).setBasePath(connectUri);
     }
 

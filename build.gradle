@@ -13,12 +13,6 @@ java {
 
 repositories {
   mavenCentral()
-  maven {
-    url "https://oss.sonatype.org/content/repositories/snapshots"
-    mavenContent {
-      snapshotsOnly()
-    }
-  }
 }
 
 configurations {
@@ -26,12 +20,12 @@ configurations {
 }
 
 dependencies {
-  compileOnly 'org.finos.symphony.wdk:workflow-language:1.6.0-SNAPSHOT'
-  compileOnly 'org.finos.symphony.bdk:symphony-bdk-app-spring-boot-starter:2.14.0'
+  compileOnly 'org.finos.symphony.wdk:workflow-language:1.6.1'
+  compileOnly 'org.finos.symphony.bdk:symphony-bdk-app-spring-boot-starter:2.14.1'
   implementation 'com.auth0:java-jwt:4.4.0'
   implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
   implementation 'com.google.code.findbugs:jsr305:3.0.2'
-  botJar 'org.finos.symphony.wdk:workflow-bot-app:1.6.0-SNAPSHOT:boot'
+  botJar 'org.finos.symphony.wdk:workflow-bot-app:1.6.1:boot'
 }
 
 tasks.register('downloadFile', Download) {
