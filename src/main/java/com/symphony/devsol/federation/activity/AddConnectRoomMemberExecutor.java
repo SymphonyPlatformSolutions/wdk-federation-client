@@ -30,14 +30,14 @@ public class AddConnectRoomMemberExecutor implements ActivityExecutor<AddConnect
     AddConnectRoomMember activity = context.getActivity();
 
     BulkRoomMemberMultiRoomRequestv2 request = new BulkRoomMemberMultiRoomRequestv2();
-    request.setAdvisorSymphonyId(activity.getAdvisorSymphonyId());
+    request.setAdvisorSymphonyId(new BigDecimal(activity.getAdvisorSymphonyId()));
     request.setExternalNetwork(activity.getExternalNetwork());
 
     List<RoomMemberMultiRoomRequestv2> requests = new ArrayList<>();
     for (String streamId : activity.getStreamIds()) {
-      for (BigDecimal userId : activity.getMemberSymphonyIds()) {
+      for (long userId : activity.getMemberSymphonyIds()) {
         RoomMemberMultiRoomRequestv2 req = new RoomMemberMultiRoomRequestv2();
-        req.setMemberSymphonyId(userId);
+        req.setMemberSymphonyId(new BigDecimal(userId));
         req.setStreamId(streamId);
         requests.add(req);
       }

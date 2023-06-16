@@ -8,6 +8,8 @@ import com.symphony.devsol.federation.model.RoomsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +23,10 @@ public class ListConnectRoomsExecutor implements ActivityExecutor<ListConnectRoo
   public void execute(ActivityExecutorContext<ListConnectRooms> context) {
     ListConnectRooms activity = context.getActivity();
     List<RoomResponse> rooms = new ArrayList<>();
-
+    BigDecimal advisorId = new BigDecimal(activity.getAdvisorSymphonyId());
     RoomsResponse response;
     if (activity.getBefore() != null || activity.getAfter() != null) {
-      response = roomApi.listRoomsv2(activity.getAdvisorSymphonyId(), activity.getExternalNetwork(), true, activity.getBefore(), activity.getAfter());
+      response = roomApi.listRoomsv2(advisorId, activity.getExternalNetwork(), true, activity.getBefore(), activity.getAfter());
     } else {
       String after = null;
       do {
@@ -33,7 +35,7 @@ public class ListConnectRoomsExecutor implements ActivityExecutor<ListConnectRoo
             Thread.sleep(300);
           } catch (InterruptedException ignore) {}
         }
-        response = roomApi.listRoomsv2(activity.getAdvisorSymphonyId(), activity.getExternalNetwork(), true, null, after);
+        response = roomApi.listRoomsv2(advisorId, activity.getExternalNetwork(), true, null, after);
         rooms.addAll(response.getRooms());
         after = response.getPagination().getCursors().getAfter();
       } while (after != null);

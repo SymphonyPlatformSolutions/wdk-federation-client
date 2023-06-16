@@ -14,7 +14,7 @@ public class DeleteConnectContactExecutor implements ActivityExecutor<DeleteConn
 
   @Override
   public void execute(ActivityExecutorContext<DeleteConnectContact> context) {
-    BigDecimal userId = context.getActivity().getUserId();
+    BigDecimal userId = new BigDecimal(context.getActivity().getUserId());
     context.setOutputVariable("contact", contactApi.deleteContactsBySymphonyIdAndExternalNetworkv2(userId));
   }
 }

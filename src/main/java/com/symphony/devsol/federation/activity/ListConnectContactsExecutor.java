@@ -18,7 +18,7 @@ public class ListConnectContactsExecutor implements ActivityExecutor<ListConnect
   public void execute(ActivityExecutorContext<ListConnectContacts> context) {
     ListConnectContacts activity = context.getActivity();
     String network = activity.getNetwork();
-    BigDecimal advisorUserId = activity.getAdvisorUserId();
+    BigDecimal advisorUserId = new BigDecimal(activity.getAdvisorUserId());
     String before = activity.getBefore();
     String after = activity.getAfter();
 
