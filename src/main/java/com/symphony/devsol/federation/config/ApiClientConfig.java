@@ -69,16 +69,6 @@ public class ApiClientConfig {
     }
 
     @Bean
-    public CompaniesApi companiesApi() {
-        return new CompaniesApi(federationApiClient());
-    }
-
-    @Bean
-    public ContactApi contactApi() {
-        return new ContactApi(federationApiClient());
-    }
-
-    @Bean
     public CustomerContactApi customerContactApi() {
         return new CustomerContactApi(federationApiClient());
     }
@@ -94,22 +84,22 @@ public class ApiClientConfig {
     }
 
     @Bean
-    public FederationGroupNewApi federationGroupNewApi() {
-        return new FederationGroupNewApi(federationApiClient());
+    public CustomerFederationGroupApi customerFederationGroupApi() {
+        return new CustomerFederationGroupApi(federationApiClient());
     }
 
     @Bean
-    public PermissionsApi permissionsApi() {
-        return new PermissionsApi(federationApiClient());
+    public CustomerAccessControlApi customerAccessControlApi() {
+        return new CustomerAccessControlApi(federationApiClient());
     }
 
     @Bean
-    public RoomApi roomApi() {
-        return new RoomApi(federationApiClient());
+    public CustomerRoomApi customerRoomApi() {
+        return new CustomerRoomApi(federationApiClient());
     }
 
     @Bean
-    public SearchApi searchApi() {
-        return new SearchApi(federationApiClient());
+    public CustomerSearchApi customerSearchApi() {
+        return new CustomerSearchApi(federationApiClient());
     }
 }

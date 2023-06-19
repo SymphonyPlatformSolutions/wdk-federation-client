@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper=true)
 public class ListConnectContacts extends BaseActivity {
-  private long advisorUserId;
+  private Long advisorUserId;
   private String symphonyId;
   private String phoneNumber;
   private String emailAddress;

@@ -29,7 +29,7 @@ dependencies {
 }
 
 tasks.register('downloadFile', Download) {
-  src 'https://3306294353-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FU492yptxY5Gs1jk0rqHF%2Fuploads%2Fgit-blob-78560a6fa9d3e49144c0d0fd1b09e4a711805c1d%2Fapi.yaml?alt=media'
+  src 'https://connect.symphony.com/admin/v3/api-docs/Customer%20APis'
   dest "${buildDir}/spec.yaml"
 }
 

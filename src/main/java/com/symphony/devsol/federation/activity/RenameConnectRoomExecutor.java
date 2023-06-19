@@ -3,8 +3,9 @@ package com.symphony.devsol.federation.activity;
 import com.symphony.bdk.core.util.IdUtil;
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutor;
 import com.symphony.bdk.workflow.engine.executor.ActivityExecutorContext;
-import com.symphony.devsol.federation.gen.RoomApi;
+import com.symphony.devsol.federation.gen.CustomerRoomApi;
 import com.symphony.devsol.federation.model.RenameRoomRequest;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RenameConnectRoomExecutor implements ActivityExecutor<RenameConnectRoom> {
-  private final RoomApi roomApi;
+  private final CustomerRoomApi roomApi;
 
   @Override
   public void execute(ActivityExecutorContext<RenameConnectRoom> context) {
