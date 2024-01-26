@@ -1,9 +1,9 @@
 id: federation-add-member
 variables:
   network: WHATSAPP
-  advisorEmailAddress: ariani.hadi@symphony.com
-  advisorSymphonyId: 349026222359608
-  serviceBotId: 349026222359222
+  advisorEmailAddress: email.address@symphony.com
+  advisorSymphonyId: 123456789012345
+  serviceBotId: 123456789012340
   index: 0
   addedMember: []
 activities:
