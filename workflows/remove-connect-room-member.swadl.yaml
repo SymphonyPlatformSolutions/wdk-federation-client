@@ -1,0 +1,110 @@
+id: federation-remove-member
+variables:
+  network: WHATSAPP
+  advisorEmailAddress: XXXX@symphony.com
+  advisorSymphonyId: 1234567890
+  serviceBotId: 1234567890
+  index: 0
+  removedMember: []
+activities:
+  - send-message:
+      id: onboard
+      on:
+        message-received:
+          content: /remove-room-contact
+      content: |
+        <form id="onboard">
+          <text-field name="phoneNumber" required="true" placeholder="Phone Number to be removed (+1234567)">+65</text-field>
+          <text-field name="streamId" required="true" placeholder="Room Stream ID"></text-field>
+          <button type="action" name="submit">Submit</button>
+        </form>
+  
+  - update-message:
+      id: confirmDetails
+      on:
+        form-replied:
+          form-id: onboard
+      message-id: ${event.source.formMessageId}
+      content: |
+        <b>Contact Details</b>
+        <table>
+          <tr><td>Phone Number</td><td>${onboard.phoneNumber}</td></tr>
+          <tr><td>Room ConversationId</td><td>${onboard.streamId}</td></tr>
+        </table>
+
+  - send-message:
+      id: confirm
+      content: |
+        <b>Confirm details?</b>
+        <form id="confirm">
+          <button name="confirm">Confirm</button>
+          <button name="cancel">Cancel</button>
+        </form>
+
+  - update-message:
+      id: cancelled
+      on:
+        form-replied:
+          form-id: confirm
+      if: ${confirm.action == 'cancel'}
+      message-id: ${event.source.formMessageId}
+      content: <b>Adding cancelled</b>
+
+  - execute-script:
+      id: process
+      on:
+        form-replied:
+          form-id: confirm
+      if: ${confirm.action == 'confirm'}
+      script: variables.members = [ onboard.phoneNumber ].findAll()
+
+  - list-connect-contacts:
+      id: findContact
+      on:
+        one-of:
+        - activity-completed:
+            activity-id: process
+            if: ${variables.members.size() > 0}
+        - activity-completed:
+            activity-id: collateAuthTraders
+            if: ${variables.index < variables.members.size()}
+      network: ${variables.network}
+      phone-number: ${variables.members[variables.index]}
+
+  - send-message:
+      id: error
+      on:
+        activity-failed:
+          activity-id: findContact
+      content: Unable to find onboarded contact for ${variables.members[variables.index]}
+
+  - execute-script:
+      id: collateAuthTraders
+      on:
+        activity-completed:
+          activity-id: findContact
+      script: |
+        userId = findContact.outputs.contacts.contacts[0].symphonyId
+        variables.removedMember.push(userId)
+        variables.index++
+
+  - send-message:
+        id: printAddingMembers
+        content: Removing Members  ${variables.members[0]} from ${onboard.streamId}
+
+  - execute-script:
+      id: collateMembers
+      script: |
+        members = [ variables.removedMember, [ variables.serviceBotId ] ]
+        variables.members = members.collectMany { it }.collect { new Long(it) }
+
+  - remove-connect-room-member:
+      id: removeFromRoom
+      stream-id: ${onboard.streamId}
+      advisor-symphony-id: ${variables.advisorSymphonyId}
+      member-symphony-id: ${variables.members[0]}
+
+  - update-message:
+      id: report
+      message-id: ${printAddingMembers.outputs.msgId}
+      content: <b>Removal user complete!</b>
